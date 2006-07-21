@@ -46,7 +46,6 @@ The returned value is a list of bioparanruns objects of class "boot", each conta
          David Schoenfeld 
   \email{dschoenfeld@partners.org}
 }
-\notes{}
 \seealso{\code{\link{boot.array},\link{boot}}}
 \examples{
 #These examples assume a master called my.server.edu running on port 39000 and a client 

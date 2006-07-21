@@ -110,7 +110,6 @@ Since we will be evaluating arbitrary strings from a publically accessible port,
          David Schoenfeld 
   \email{dschoenfeld@partners.org}
 }
-\notes{}
 \examples{
 #These examples assume a master called my.server.edu running on port 39000 and a client 
 #1.2.3.4 using return port 40000. The client port is chosen arbitrarily from free ports by the user

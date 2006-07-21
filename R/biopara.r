@@ -103,24 +103,35 @@ print("cleaning up");
 		for (bioparaiterator in 1:bioparanumberofservers)
 		{
 			bioparathecommand <- bioparaconfig[[bioparaiterator]][[5]];
-#print(bioparathecommand);
-#			system(bioparathecommand, ignore.stderr = TRUE);
-			system(bioparathecommand);
+print(bioparathecommand);
+			try(system(bioparathecommand, ignore.stderr = TRUE),silent=TRUE);
 		}
+Sys.sleep(5)
 		for (bioparaiterator in 1:bioparanumberofservers)
 		{
+print("bioparaiterator is");
+print(bioparaiterator);
+print("host is");
+print(bioparaconfig[[bioparaiterator]][[1]]);
+print("port is"); 
+print(as.double(bioparaconfig[[bioparaiterator]][[4]]))
+
 			try({bioparaclientsocket<- socketConnection(host = bioparaconfig[[bioparaiterator]][[1]], port = as.double(bioparaconfig[[bioparaiterator]][[4]]), server = FALSE);bioparasocketsuccess<-1;},silent=TRUE);
-			if(bioparasocketsuccess == 1)
+			if(bioparasocketsuccess == 1 && bioparaclientsocket != 0)
 			{
-				writeLines("-1", bioparaclientsocket);
 print("the bioparaclientsocket is");
 print(bioparaclientsocket);
+				writeLines("-1", bioparaclientsocket);
+print("port is");
+print(as.double(bioparaconfig[[bioparaiterator]][[2]]));
 				bioparaserversocket <- socketConnection(host = "localhost", port= as.double(bioparaconfig[[bioparaiterator]][[2]]), server = TRUE);
 print("the bioparaserversocket is");
 print(bioparaserversocket);
 				bioparanumservers <- bioparanumservers+1; 
 				bioparasvrsocketlist[[bioparanumservers]] <- bioparaserversocket;
 				bioparacntsocketlist[[bioparanumservers]] <- bioparaclientsocket;
+				bioparaclientsocket<-0;
+				bioparaserversocket<-0;
 			}
 			else
 			{
@@ -291,24 +302,30 @@ print("Itemlist incremented");
 print("Number of items in this environment is");
 print(bioparanumberofitems);
 print("Writing the environment to the workers");
-				for (bioparaitersave in 1:bioparanumservers)
+				if(bioparanumberofitems == 0)
 				{
-					bioparaclientsocket <- bioparacntsocketlist[[bioparaitersave]];
+				}
+				else
+				{
+					for (bioparaitersave in 1:bioparanumservers)
+					{
+						bioparaclientsocket <- bioparacntsocketlist[[bioparaitersave]];
 print("Talking to worker:");
 print(bioparaclientsocket);
-					if(bioparaclientsocket != -1)
-					{
+						if(bioparaclientsocket != -1)
+						{
 #print("it is live")
 #print("bioparaitersave is");
 #print(bioparaitersave);
-						bioparamystring <- paste("#",bioparausrname , "#setenv#", sep="");
-						writeLines(bioparamystring, con = bioparaclientsocket);
-						for(bioparaiterator in 1:bioparanumberofitems)
-						{
-							writeLines(bioparasizeoftheitem[[bioparaiterator]], con=bioparaclientsocket);
-							writeLines(bioparathelist[[bioparaiterator]], con= bioparaclientsocket);
+							bioparamystring <- paste("#",bioparausrname , "#setenv#", sep="");
+							writeLines(bioparamystring, con = bioparaclientsocket);
+							for(bioparaiterator in 1:bioparanumberofitems)
+							{
+								writeLines(bioparasizeoftheitem[[bioparaiterator]], con=bioparaclientsocket);
+								writeLines(bioparathelist[[bioparaiterator]], con= bioparaclientsocket);
+							}
+							writeLines("-1", bioparaclientsocket);
 						}
-						writeLines("-1", bioparaclientsocket);
 					}
 				}
 				file.remove(paste(bioparatargdir,"/tempvars.r",sep=""));
@@ -464,11 +481,11 @@ print("Waiting");
 #print("bioparabookkeeping is");
 #print(bioparabookkeeping);
 						bioparatempbookkeeping <- bioparabookkeeping[[bioparaiterator]];
-						bioparamystring <- readLines(con=bioparatempbookkeeping[[5]],n=1);
-#print("trying for result");	
-#print(bioparatempbookkeeping[[5]]);
+print("trying for result");	
+print(bioparatempbookkeeping[[5]]);
 #print("bioparamystring is");
 #print(bioparamystring)
+						bioparamystring <- readLines(con=bioparatempbookkeeping[[5]],n=1);
 						if(bioparamystring == "readytosend")
 						{
 print("Got result");
@@ -493,12 +510,12 @@ print(bioparafirsttimetoreturn);
 #print("bioparaisfirstreturn is");
 #print(bioparaisfirstreturn);
 							}
-#print("waiting for return size");
+print("waiting for return size");
 							bioparamystring <- readLines(con=bioparatempbookkeeping[[5]], n=1);
-#print("got it, it is");
-#print(bioparamystring);
-#print("double value is");
-#print(as.double(bioparamystring));
+print("got it, it is");
+print(bioparamystring);
+print("double value is");
+print(as.double(bioparamystring));
 print("Waiting for data stream");
 							bioparamystring <- readLines(con=bioparatempbookkeeping[[5]], n= as.double(bioparamystring));
 print("Got it");
@@ -506,8 +523,12 @@ print("Got it");
 #print(bioparamystring)
 #							eval(parse(text=bioparamystring));
 print("Assigning answer to list");
+print("Total runs is");	
+#print(bioparanumruns);
 							bioparatheanswer[[bioparatempbookkeeping[[2]]]] <- bioparamystring;
+print("Assigned")
 							remove("bioparaparrans");
+print("bioparrans removed")
 							if(sum(nchar(nchar(nchar(bioparabookkeeping)))) > 1)
 							{
 #print("bioparabookkeeping larger than 1. bioparabookkeeping is:");
@@ -527,6 +548,7 @@ print("Assigning answer to list");
 									}
 									else
 									{
+#print("not removing last element");
 										bioparabookkeeping <- c(bioparabookkeeping[1:(bioparaiterator-1)], bioparabookkeeping[(bioparaiterator+1):sum(nchar(nchar(nchar(bioparabookkeeping))))]);
 									}
 									bioparacounter <- sum(nchar(nchar(nchar(bioparabookkeeping))));
@@ -547,10 +569,10 @@ print("Assigning answer to list");
 #print(bioparasizetodo);
 							if((bioparasizetodo != 0))
 							{
-print("We are posting something to the cluster");	
-print("Size of our to-do list is");		
+#print("We are posting something to the cluster");	
+#print("Size of our to-do list is");		
 #print("bioparasizetodo1 is");	
-print(bioparasizetodo);	
+#print(bioparasizetodo);	
 								bioparacurrentsocket <- bioparatempbookkeeping[[4]];
 								bioparatemptodo <- bioparatodolist[[1]];
 print("Current item is");
@@ -600,7 +622,7 @@ print((bioparafirsttimetoreturn*3));
 print("Host has not completed in a timely manner");			
 print("The culprit is");	
 print(bioparatempbookkeeping[[4]]);	
-#print("bioparasizetodo befoer addition is");
+#print("bioparasizetodo before addition is");
 #print(bioparasizetodo);
 #print("bioparatodolist before addition is");
 #print(bioparatodolist);
@@ -667,9 +689,9 @@ print(bioparanrepairs);
 						bioparaiterator<-bioparaiterator+1;
 					}
 ######################################end results check###################################
-#print("results checking is out of the way");
-#print("bioparacounter is");
-#print(bioparacounter);
+print("results checking is out of the way");
+print("bioparacounter is");
+print(bioparacounter);
 ######################################task creation#####################################
 					if(bioparacounter == 0)
 					{
@@ -754,7 +776,7 @@ print("Dumping answer to file");
 			dump("bioparaparrans");
 print("Reading it back in as text");
 			bioparaparrans <- readLines(con="dumpdata.R");
-                        file.copy("dumpdata.R",paste("./",bioparausrname,Sys.time(),"output.R"),overwrite=TRUE);
+#                        file.copy("dumpdata.R",paste("./",bioparausrname,Sys.time(),"output.R"),overwrite=TRUE);
 #print("writing size to client");
 			bioparasocketsuccess <- 0;
 			try({bioparaclientclientsocket <- socketConnection(host = bioparaclientclientname , port= as.double(bioparaclientclientport), server = FALSE);bioparasocketsuccess <-1;},silent=TRUE);
@@ -800,31 +822,38 @@ remove("bioparaparrans");
 
 	if((typeof(bioparatarget)=="double")&&(typeof(bioparasource)=="character")&&(typeof(bioparanruns)=="character")&&(typeof(bioparafxn)=="double"))
 	{
+		bioparaworkerhostname<-system("hostname",intern=TRUE);
 		bioparaworkingdir <- bioparasource;
-print("Server is alive");
+print(paste(bioparaworkerhostname,": ","Server is alive"));
 		options("warn" = -1);
 		setwd(bioparaworkingdir);	
-print("Beginning socket creation");
+print(paste(bioparaworkerhostname,": ",getwd()));
+print(paste(bioparaworkerhostname,": ","Beginning socket creation"));
 		bioparaserversocket <- socketConnection(host = "localhost", port= bioparafxn, server = TRUE);
-print("Server socket got picked up");
-print(bioparaserversocket);
+print(paste(bioparaworkerhostname,": ","Server socket got picked up"));
+print(paste(bioparaworkerhostname,": ",bioparaserversocket));
 		bioparamystring <- readLines(con=bioparaserversocket, n=1);
 		Sys.sleep(1);
 		bioparaclientsocket <- socketConnection(host = bioparanruns, port= bioparatarget, server = FALSE);
-print("Client socket got picked up");
-print(bioparaclientsocket);
+print(paste(bioparaworkerhostname,": ","Client socket got picked up"));
+print(paste(bioparaworkerhostname,": ",bioparaclientsocket));
 		bioparacurrentuser = "nobody.yet"
 		while (TRUE)
 		{
 			bioparaoutput = list();
 			bioparacurrentvarplaceholder <- "";
-print("Waiting for command");
+print(paste(bioparaworkerhostname,": ","Waiting for command"));
 			bioparamystring <- readLines(bioparaserversocket,n=1);
-print("Got one, it is");
-print(bioparamystring);
+print(paste(bioparaworkerhostname,": ","Got one, it is"));
+print(paste(bioparaworkerhostname,": ",bioparamystring));
 			bioparatempvar<- nchar(bioparamystring);
 			bioservecurrentindex <- 1;
 			bioservenumberofrecieved <- 1;
+			if(bioparamystring == "-1")
+			{
+				next;
+			}
+
 			for(bioparaiterator in 1:bioparatempvar)
 			{
 				if(substr(bioparamystring,bioparaiterator,bioparaiterator) == "#")
@@ -835,21 +864,26 @@ print(bioparamystring);
 				}
 			}
 			bioparausrname <- bioparaoutput[[2]];
-print("User name is");
-print(bioparausrname);
+print(paste(bioparaworkerhostname,": ","User name is"));
+print(paste(bioparaworkerhostname,": ",bioparausrname));
 			bioparathecommand <- bioparaoutput[[3]];
-print("The command is");
-print(bioparathecommand);
+print(paste(bioparaworkerhostname,": ","The command is"));
+print(paste(bioparaworkerhostname,": ",bioparathecommand));
 			if({bioparausrname != bioparacurrentuser}||{bioparathecommand == "reset"})
 			{
-print("This user is different from our current user");
-				bioparacurrentvars <- ls();
+print(paste(bioparaworkerhostname,": ","This user is different from our current user"));
+				bioparacurrentvars <- ls(envir = globalenv());
+#				bioparacurrentvars <- ls();
 #print("currenvars is");
 #print(bioparacurrentvars);
 				bioparasize <- sum(nchar(nchar(nchar(bioparacurrentvars))))
 				for(bioparaiterator in 1:bioparasize)
 				{
 					if("bioparaserversocket"== bioparacurrentvars[[bioparaiterator]])
+					{		
+						bioparacurrentvars[[bioparaiterator]] = "bioparacurrentvarplaceholder";
+					}
+					if("bioparaworkerhostname"== bioparacurrentvars[[bioparaiterator]])
 					{		
 						bioparacurrentvars[[bioparaiterator]] = "bioparacurrentvarplaceholder";
 					}
@@ -891,13 +925,13 @@ print("This user is different from our current user");
 			}
 			else
 			{
-print("This is the same user as before:");
+print(paste(bioparaworkerhostname,": ","This is the same user as before:"));
 #print(bioparacurrentuser);
 			}
 			if({bioparathecommand == "setenv"}||{bioparathecommand == "reset"})
 			{
-print("This is a setenv, ls is");
-print(ls());
+print(paste(bioparaworkerhostname,": ","This is a setenv, ls is"));
+print(paste(bioparaworkerhostname,": ",ls()));
 				if(bioparathecommand == "reset")
 				{
 				}
@@ -911,32 +945,32 @@ print(ls());
 #print(bioparamystring);
 						if(as.double(bioparamystring) == -1)
 						{
-print("We got a -1, breaking loop")
+print(paste(bioparaworkerhostname,": ","We got a -1, breaking loop"))
 							break;
 						}
 						else
 						{
-print("Not a -1, waiting for data");
+print(paste(bioparaworkerhostname,": ","Not a -1, waiting for data"));
 							bioparasocketsuccess = 0;
 							bioparamystring <- readLines(con=bioparaserversocket, n = as.double(bioparamystring));
-print("Data recieved, evaluating");
-print(bioparamystring);
-#							eval(parse(text=bioparamystring));
-							try({eval(parse(text=bioparamystring));bioparasocketsuccess <-1;},silent=TRUE);
+print(paste(bioparaworkerhostname,": ","Data recieved, evaluating"));
+#print(bioparamystring);
+							try({eval(parse(text=bioparamystring),envir = globalenv());bioparasocketsuccess <-1;},silent=TRUE);
+#							try({eval(parse(text=bioparamystring));bioparasocketsuccess <-1;},silent=TRUE);
 							if(bioparasocketsuccess == 0)
 							{
 								bioparatheanswer <- geterrmessage();
 								break;
 							}
-print("Evaluation done");
+print(paste(bioparaworkerhostname,": ","Evaluation done"));
 						}
 					}
-print("Environment loading done, ls is");
-print(ls());
-print("Saving file");
+print(paste(bioparaworkerhostname,": ","Environment loading done, ls is"));
+print(paste(bioparaworkerhostname,": ",ls()));
+print(paste(bioparaworkerhostname,": ","Saving file"));
 					remove("bioparathecommand");
 					try(save(file=paste(bioparausrname,".r",sep=""), list=ls()), silent=TRUE);
-print("Save done");		
+print(paste(bioparaworkerhostname,": ","Save done"));		
 				}
 			}
 			else
@@ -960,48 +994,51 @@ print("Save done");
 				if(bioparasystemscheck == 1)
 				{
 					bioparaparrans <- "system() calls are not allowed";
-print("Recieved a system call, ignoring");
+print(paste(bioparaworkerhostname,": ","Recieved a system call, ignoring"));
 #print(bioparaparrans);
 					dump("bioparaparrans");
-print("Dumped answer");
+print(paste(bioparaworkerhostname,": ","Dumped answer"));
 					bioparamystring <- readLines(con="dumpdata.R");
-print("Read back in a text");
+print(paste(bioparaworkerhostname,": ","Read back in a text"));
 					writeLines("readytosend",bioparaclientsocket);
-print("Sent ready signal, writing answer");
+print(paste(bioparaworkerhostname,": ","Sent ready signal, writing answer"));
 					writeLines(toString(sum(nchar(nchar(nchar(nchar(bioparamystring)))))), bioparaclientsocket);
+print(paste(bioparaworkerhostname,": ","Size written"));
 					writeLines(bioparamystring,bioparaclientsocket);
-print("Answer written");
+print(paste(bioparaworkerhostname,": ","Answer written"));
 					remove("bioparamystring");
 				}
 				else
 				{
-print("A computation run");
-print("The current environment is");
-print(ls());
+print(paste(bioparaworkerhostname,": ","A computation run"));
+print(paste(bioparaworkerhostname,": ","The current environment is"));
+print(paste(bioparaworkerhostname,": ",ls()));
 					remove("bioservecurrentindex ");
 					remove(bioparatempvar);
 					remove("bioparasystemscheck");
 					remove(bioparaparrans);
 					remove("bioparaexecsuccess");
-print("Beginning evaluation");
-					try({bioparaparrans <- eval(parse(text = bioparathecommand)); bioparaexecsuccess <-1}, silent=TRUE);
-print("Evaluation done");
+print(paste(bioparaworkerhostname,": ","Beginning evaluation"));
+					try({bioparaparrans <- eval(parse(text = bioparathecommand),envir = globalenv()); bioparaexecsuccess <-1}, silent=TRUE);
+#					try({bioparaparrans <- eval(parse(text = bioparathecommand)); bioparaexecsuccess <-1}, silent=TRUE);
+print(paste(bioparaworkerhostname,": ","Evaluation done"));
 					if(!exists("bioparaexecsuccess"))
 					{
-print("But there was an error");
+print(paste(bioparaworkerhostname,": ","But there was an error"));
 						bioparaparrans <- geterrmessage();
-print(bioparaparrans);
+print(paste(bioparaworkerhostname,": ",bioparaparrans));
 					}
-#print(bioparaparrans);
+print(paste(bioparaworkerhostname,": ","Dumping"));
 					dump("bioparaparrans");                                     
-print("Dumped answer");
+print(paste(bioparaworkerhostname,": ","Dumped answer"));
 					bioparamystring <- readLines(con="dumpdata.R");
-print("Read answer back in");
+print(paste(bioparaworkerhostname,": ","Read answer back in"));
 					writeLines("readytosend",bioparaclientsocket);
-print("Sent ready signal, writing answer");
-					writeLines(toString(sum(nchar(nchar(nchar(nchar(bioparamystring)))))), bioparaclientsocket);
+print(paste(bioparaworkerhostname,": ","Sent ready signal, writing answer"));
+					writeLines(toString(sum(nchar(nchar(nchar(nchar(nchar(nchar(nchar(nchar(nchar(nchar(bioparamystring)))))))))))), bioparaclientsocket);
+print(paste(bioparaworkerhostname,": ","Size written"));
 					writeLines(bioparamystring,bioparaclientsocket);
-print("Answer written");
+print(paste(bioparaworkerhostname,": ","Answer written"));
 					remove("bioparamystring");
 				}
 			}
@@ -1131,6 +1168,7 @@ print("Standard computation run");
 #print("Total items is")
 #print(bioparanumberofitems);
 print("Establishing client socket to master");
+		Sys.sleep(2);
 		bioparaclientsocket <- socketConnection(host = bioparatarget[[1]], port= bioparatarget[[2]], server = FALSE);
 print("Socket established");
 print("Writing hostname to master");
@@ -1158,22 +1196,24 @@ print("Writing data");
 		try(close(bioparaserversocket),silent=TRUE);
 print("Waiting for return connection");
 		bioparaserversocket <- socketConnection(host = "localhost", port=bioparasource[[2]] , server = TRUE);
-#print("Waiting for answer size");
+print("Waiting for answer size");
 		bioparaparrans <- readLines(con=bioparaserversocket, n=1);
-#print("Answer size recieved it is");
-#print(bioparaparrans);
-#print("Coerced to double it is");
-#print(as.double(bioparaparrans));
+print("Answer size recieved it is");
+print(bioparaparrans);
+print("Coerced to double it is");
+print(as.double(bioparaparrans));
 print("Recieving data");
 		bioparaparrans <- readLines(con=bioparaserversocket, n=as.double(bioparaparrans));
 print("Answer recieved");
 #print(bioparaparrans);
+#                save(bioparaparrans, file="biopararrans.r");
 		eval(parse(text=bioparaparrans));		
                 bioparasizeoftheitem <- sum(nchar(nchar(nchar(nchar(nchar(nchar(nchar(nchar(nchar(bioparaparrans))))))))));
 #print("bioparasizeoftheitem is");
 #print(bioparasizeoftheitem);
                 bioparaparranstemp <- bioparaparrans;
                 bioparaparransoutput <- list();
+#return(bioparaparranstemp);
 		if(bioparasizeoftheitem == 1)
 		{
 			bioparaparransoutput<- bioparaparranstemp[[1]];	
@@ -1186,7 +1226,7 @@ print("Answer processed");
 	                {
 				bioparaparransoutput[[bioparaiterator]]<-bioparaparranstemp[[bioparaiterator]]
 				try({bioparaparransoutput[[bioparaiterator]]<-eval(parse(text=bioparaparranstemp[[bioparaiterator]]));},silent=TRUE);
-				print(system.time(eval(parse(text=bioparaparranstemp[[bioparaiterator]]))))
+#				print(system.time(eval(parse(text=bioparaparranstemp[[bioparaiterator]]))))
 	                }
 print("Answer processed: local times above. These should be low");
 		}
