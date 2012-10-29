@@ -211,15 +211,6 @@ myfunc <- function(a,b){a+b}
 #See your worker process. It will be the entry before the 36000 and 39000 entries
 \dontrun{out<-biopara(list("localhost",39000),list("localhost",40000),1,list("hosts"))}
 
-#How to use example function pboot with example from boot
-library(boot)
-data(city)
-ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
-\dontrun{out<-biopara(list("localhost",39000),list("localhost",40000),list("myfunc"),list("setenv"))}
-\dontrun{out<-biopara(list("localhost",39000),list("localhost",40000),1,list("numservers"))}
-\dontrun{out<-biopara(list("localhost",39000),list("localhost",40000),out,list("data(city)"))}
-\dontrun{out<-pboot(list("localhost",39000),list("localhost",40000),5,mydata, ratio, R=999, stype="w")}
-
 }
 \keyword{ misc }
 \keyword{ utilities }
